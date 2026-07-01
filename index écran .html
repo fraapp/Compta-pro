@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Compta — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EFEBE3;
+  --surface:#FFFFFF;
+  --surface-2:#FBF9F4;
+  --ink:#15212B;
+  --ink-soft:#5B6571;
+  --ink-faint:#8A929C;
+  --line:#E2DDD2;
+  --line-strong:#D2CCBF;
+  --accent:#1C6B4F;
+  --accent-deep:#155640;
+  --accent-tint:#E3EFE8;
+  --amber:#A66B12;
+  --amber-tint:#F4E9D3;
+  --alert:#A8392F;
+  --alert-tint:#F3DEDA;
+  --shadow:0 1px 2px rgba(21,33,43,.06),0 8px 24px rgba(21,33,43,.06);
+  --shadow-sheet:0 -8px 40px rgba(21,33,43,.18);
+  --r:14px;
+  --r-sm:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  display:flex;justify-content:center;
+  overscroll-behavior:none;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.mono{font-family:'Spline Sans Mono',monospace;font-variant-numeric:tabular-nums}
+
+/* ---------- App shell ---------- */
+.app{
+  width:100%;max-width:480px;height:100dvh;
+  background:var(--paper);
+  display:flex;flex-direction:column;
+  position:relative;overflow:hidden;
+  box-shadow:0 0 60px rgba(21,33,43,.10);
+}
+@media(min-width:900px){.app{max-width:560px}}
+
+/* ---------- Bandeau permanent ---------- */
+.bandeau{
+  background:var(--ink);color:#fff;
+  padding:10px 16px 12px;
+  flex-shrink:0;z-index:30;
+}
+.bandeau-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.dossier-id{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.dossier-id .nom{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dossier-id .sub{font-size:11px;color:#9BA6B0}
+.brand-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px rgba(28,107,79,.3);flex-shrink:0}
+.ctx{
+  display:flex;gap:8px;margin-top:11px;
+}
+.ctx-chip{
+  flex:1;background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:9px;padding:6px 10px;
+  display:flex;flex-direction:column;line-height:1.2;text-align:left;
+  transition:background .15s;
+}
+.ctx-chip:active{background:rgba(255,255,255,.14)}
+.ctx-chip .lbl{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#8A95A0;font-weight:600}
+.ctx-chip .val{font-size:12.5px;font-weight:600;margin-top:1px;display:flex;align-items:center;gap:5px}
+.ctx-chip .val svg{opacity:.5}
+
+/* ---------- View area ---------- */
+.viewport{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;position:relative}
+.view{display:none;padding:18px 16px 28px;animation:fade .28s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.subview{display:none;animation:slidein .26s cubic-bezier(.2,.7,.2,1)}
+.subview.active{display:block}
+@keyframes slidein{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+
+/* ---------- Section headers ---------- */
+.eyebrow{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+.back-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:13px;font-weight:600;color:var(--accent);
+  padding:6px 2px;margin-bottom:6px;
+}
+.back-btn svg{width:16px;height:16px}
+
+/* ---------- Exercice signature header ---------- */
+.exercice{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:18px 18px 16px;box-shadow:var(--shadow);
+  position:relative;overflow:hidden;
+}
+.exercice::before{
+  content:"";position:absolute;top:0;left:0;width:5px;height:100%;
+  background:linear-gradient(var(--accent),var(--accent-deep));
+}
+.exercice .eyebrow{margin-bottom:6px}
+.exercice h1{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:700;font-size:27px;line-height:1.02;letter-spacing:-.01em;
+}
+.exercice .revenus{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:600;font-size:15px;color:var(--accent);margin-top:3px;
+}
+.exercice-foot{
+  display:flex;gap:8px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line);
+}
+.year-pill{
+  font-size:12px;font-weight:600;padding:6px 11px;border-radius:8px;
+  border:1px solid var(--line-strong);color:var(--ink-soft);background:var(--surface-2);
+  display:inline-flex;align-items:center;gap:6px;transition:.15s;
+}
+.year-pill.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.year-pill.add{color:var(--accent);border-style:dashed;border-color:var(--accent)}
+
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:24px 2px 12px}
+.section-title h2{font-size:15px;font-weight:700}
+.section-title .count{font-size:12px;color:var(--ink-faint);font-weight:500}
+
+/* ---------- Activity cards (folder-tab signature) ---------- */
+.act-card{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:15px 16px;box-shadow:var(--shadow);
+  margin-bottom:12px;position:relative;transition:transform .12s,box-shadow .12s;
+}
+.act-card:active{transform:scale(.992)}
+.act-card .tab{
+  position:absolute;top:-1px;left:18px;
+  background:var(--accent);color:#fff;font-size:10px;font-weight:700;
+  letter-spacing:.04em;padding:3px 9px 4px;border-radius:0 0 7px 7px;
+}
+.act-card.muted{opacity:.55}
+.act-card.muted .tab{background:var(--ink-faint)}
+.act-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-top:9px}
+.act-head .libelle{font-size:16px;font-weight:700;line-height:1.2}
+.act-head .nature{font-size:12px;color:var(--ink-soft);margin-top:2px}
+.regime-badge{
+  font-size:10.5px;font-weight:600;padding:4px 9px;border-radius:20px;white-space:nowrap;
+}
+.regime-badge.tva{background:var(--accent-tint);color:var(--accent-deep)}
+.regime-badge.franchise{background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line-strong)}
+.act-foot{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:13px;padding-top:12px;border-top:1px solid var(--line);
+}
+.act-stats{display:flex;gap:16px}
+.act-stat{display:flex;flex-direction:column;line-height:1.1}
+.act-stat .n{font-family:'Spline Sans Mono',monospace;font-weight:600;font-size:15px}
+.act-stat .k{font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.toggle{
+  display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-soft);font-weight:500;
+}
+.switch{width:38px;height:22px;border-radius:20px;background:var(--accent);position:relative;transition:.18s;flex-shrink:0}
+.switch.off{background:var(--line-strong)}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.18s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.switch.off::after{left:2px}
+.switch:not(.off)::after{left:18px}
+
+.add-card{
+  border:1.5px dashed var(--line-strong);border-radius:var(--r);
+  padding:15px;display:flex;align-items:center;justify-content:center;gap:8px;
+  color:var(--accent);font-weight:600;font-size:14px;background:transparent;width:100%;
+}
+
+/* identity block */
+.id-card{
+  background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px 16px;margin-top:14px;
+}
+.id-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-top:4px}
+.id-item .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);font-weight:600}
+.id-item .v{font-size:13px;font-weight:500;margin-top:2px}
+.id-item.full{grid-column:1/-1}
+
+/* ---------- SCAN ---------- */
+.scan-intro{font-size:13px;color:var(--ink-soft);margin-bottom:16px;line-height:1.45}
+.big-btn{
+  width:100%;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:16px;box-shadow:var(--shadow);
+  display:flex;align-items:center;gap:14px;margin-bottom:11px;
+  text-align:left;transition:transform .12s,border-color .12s;
+}
+.big-btn:active{transform:scale(.99)}
+.big-btn .ic{
+  width:46px;height:46px;border-radius:12px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--accent-tint);color:var(--accent-deep);
+}
+.big-btn .ic svg{width:24px;height:24px}
+.big-btn .txt{flex:1;min-width:0}
+.big-btn .txt .t{font-size:15.5px;font-weight:700}
+.big-btn .txt .d{font-size:12px;color:var(--ink-soft);margin-top:2px}
+.big-btn .arrow{color:var(--ink-faint)}
+.big-btn .tva-tag{font-size:10px;font-weight:600;color:var(--accent-deep);background:var(--accent-tint);padding:2px 7px;border-radius:10px;margin-top:5px;display:inline-block}
+.big-btn .tva-tag.fr{color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line-strong)}
+
+.dossier-level{margin-top:20px}
+.dossier-level .lvl-label{display:flex;align-items:center;gap:9px;margin:0 2px 11px}
+.dossier-level .lvl-label .eyebrow{white-space:nowrap}
+.dossier-level .lvl-label .ln{height:1px;background:var(--line-strong);flex:1}
+.big-btn.shared .ic{background:var(--amber-tint);color:var(--amber)}
+.big-btn.bank .ic{background:#E4E9EF;color:#2C3E52}
+
+/* sub-menu (types de doc) */
+.scan-ctx-bar{
+  display:flex;align-items:center;gap:10px;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:11px 14px;margin-bottom:18px;box-shadow:var(--shadow);
+}
+.scan-ctx-bar .badge{font-size:10px;font-weight:700;color:#fff;background:var(--accent);padding:3px 8px;border-radius:6px}
+.scan-ctx-bar .badge.shared{background:var(--amber)}
+.scan-ctx-bar .nm{font-weight:700;font-size:14px}
+.scan-ctx-bar .nm small{display:block;font-weight:500;font-size:11px;color:var(--ink-soft)}
+
+.group{margin-bottom:18px}
+.group-h{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin:0 2px 9px}
+.tile-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:13px 13px 14px;box-shadow:var(--shadow);text-align:left;
+  display:flex;flex-direction:column;gap:9px;min-height:92px;transition:transform .12s;
+}
+.tile:active{transform:scale(.98)}
+.tile.full{grid-column:1/-1;flex-direction:row;align-items:center;min-height:0;gap:13px}
+.tile .ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:var(--accent-tint);color:var(--accent-deep)}
+.tile .ic svg{width:19px;height:19px}
+.tile.info .ic{background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line)}
+.tile.import .ic{background:#E4E9EF;color:#2C3E52}
+.tile .t{font-size:13.5px;font-weight:600;line-height:1.25}
+.tile.full .t{flex:1}
+.tile .d{font-size:11px;color:var(--ink-faint)}
+
+/* ---------- Bottom sheet (fiche) ---------- */
+.scrim{position:absolute;inset:0;background:rgba(21,33,43,.45);z-index:40;opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim.show{opacity:1;pointer-events:auto}
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;z-index:50;
+  background:var(--surface);border-radius:20px 20px 0 0;
+  max-height:92%;display:flex;flex-direction:column;
+  transform:translateY(102%);transition:transform .3s cubic-bezier(.2,.8,.2,1);
+  box-shadow:var(--shadow-sheet);
+}
+.sheet.show{transform:none}
+.sheet-grip{width:38px;height:4px;border-radius:3px;background:var(--line-strong);margin:9px auto 2px}
+.sheet-head{padding:6px 18px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.sheet-head .ti{font-size:16px;font-weight:700}
+.sheet-head .x{width:30px;height:30px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft)}
+.sheet-body{padding:16px 18px;overflow-y:auto}
+.doc-preview{
+  background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
+  height:120px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;
+  color:var(--ink-faint);margin-bottom:16px;position:relative;overflow:hidden;
+}
+.doc-preview .lines{position:absolute;inset:14px;background:
+  repeating-linear-gradient(transparent 0 9px,var(--line) 9px 10px);opacity:.5}
+.doc-preview .stamp{z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.doc-preview .stamp svg{width:26px;height:26px;color:var(--accent)}
+.doc-preview .stamp span{font-size:11px;font-weight:600;color:var(--ink-soft)}
+
+.field{margin-bottom:14px}
+.field>label{display:block;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px}
+.inp,.sel{
+  width:100%;border:1px solid var(--line-strong);border-radius:10px;
+  padding:11px 13px;font-size:14px;font-family:inherit;background:var(--surface);color:var(--ink);
+}
+.sel{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235B6571' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center}
+.field-row{display:flex;gap:10px}
+.field-row .field{flex:1}
+.mono-inp{font-family:'Spline Sans Mono',monospace;font-variant-numeric:tabular-nums}
+.field .hint{font-size:11px;color:var(--ink-faint);margin-top:5px}
+
+/* conditional blocks */
+.cond{border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:14px;background:var(--surface-2)}
+.cond.tva{border-color:var(--accent-tint);background:var(--accent-tint)}
+.cond.share{border-color:var(--amber-tint);background:#FBF5EA}
+.cond-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.cond-h .ti{font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:7px}
+.cond-h .ti svg{width:15px;height:15px}
+.cond .desc{font-size:11.5px;color:var(--ink-soft);line-height:1.4;margin-bottom:10px}
+
+.repart{display:flex;flex-direction:column;gap:9px}
+.repart-row{display:flex;align-items:center;gap:10px}
+.repart-row .anm{flex:1;font-size:13px;font-weight:500}
+.repart-row .pct{width:74px;display:flex;align-items:center;gap:4px}
+.repart-row .pct input{width:100%;border:1px solid var(--line-strong);border-radius:8px;padding:7px 8px;text-align:right;font-family:'Spline Sans Mono',monospace;font-size:13px;background:#fff}
+.repart-sum{display:flex;align-items:center;justify-content:space-between;margin-top:4px;padding-top:9px;border-top:1px dashed var(--line-strong);font-size:12px;font-weight:600}
+.repart-sum .ok{color:var(--accent)}
+.repart-sum .bad{color:var(--alert)}
+
+.sheet-foot{padding:13px 18px calc(13px + env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;gap:10px;background:var(--surface)}
+.btn{flex:1;border-radius:11px;padding:13px;font-size:14px;font-weight:700;text-align:center;transition:.12s}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.primary:active{background:var(--accent-deep)}
+.btn.ghost{background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line-strong);flex:0 0 auto;padding:13px 18px}
+
+/* ---------- Bank control ---------- */
+.bank-import{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:15px 16px;box-shadow:var(--shadow);margin-bottom:16px;
+  display:flex;align-items:center;gap:13px;
+}
+.bank-import .ic{width:42px;height:42px;border-radius:11px;background:#E4E9EF;color:#2C3E52;display:flex;align-items:center;justify-content:center}
+.bank-import .ic svg{width:22px;height:22px}
+.bank-import .t{flex:1}
+.bank-import .t .a{font-weight:700;font-size:14px}
+.bank-import .t .b{font-size:11.5px;color:var(--ink-soft);margin-top:1px}
+.mini-btn{font-size:12px;font-weight:600;color:var(--accent);border:1px solid var(--accent);border-radius:9px;padding:8px 12px}
+
+.pile{margin-bottom:16px}
+.pile-h{display:flex;align-items:center;gap:8px;margin:0 2px 9px}
+.pile-h .dot{width:9px;height:9px;border-radius:3px}
+.pile-h .ti{font-size:13px;font-weight:700}
+.pile-h .ct{font-size:11px;color:var(--ink-faint);font-weight:500;margin-left:auto}
+.pile.in .dot{background:var(--accent)}
+.pile.out .dot{background:var(--ink)}
+.pile.todo .dot{background:var(--amber)}
+.bline{
+  background:var(--surface);border:1px solid var(--line);border-radius:11px;
+  padding:11px 13px;margin-bottom:8px;display:flex;align-items:center;gap:11px;box-shadow:var(--shadow);
+}
+.bline .bi{flex:1;min-width:0}
+.bline .bi .lab{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bline .bi .dt{font-size:11px;color:var(--ink-faint);margin-top:1px}
+.bline .amt{font-family:'Spline Sans Mono',monospace;font-weight:600;font-size:13.5px;white-space:nowrap}
+.bline .amt.pos{color:var(--accent)}
+.bline .amt.neg{color:var(--ink)}
+.bstatus{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;margin-top:5px}
+.bstatus.ok{background:var(--accent-tint);color:var(--accent-deep)}
+.bstatus.miss{background:var(--alert-tint);color:var(--alert)}
+.bstatus.wait{background:var(--amber-tint);color:var(--amber)}
+.attr-btn{font-size:11px;font-weight:600;color:var(--accent);border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;white-space:nowrap}
+
+/* ---------- Placeholder tabs ---------- */
+.placeholder{text-align:center;padding:60px 24px}
+.placeholder .pic{width:64px;height:64px;border-radius:18px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:var(--shadow);color:var(--accent)}
+.placeholder h3{font-size:18px;font-weight:700;margin-bottom:7px}
+.placeholder p{font-size:13.5px;color:var(--ink-soft);line-height:1.5;max-width:280px;margin:0 auto}
+.placeholder .soon{display:inline-block;margin-top:16px;font-size:11px;font-weight:600;color:var(--amber);background:var(--amber-tint);padding:6px 13px;border-radius:20px}
+
+/* ---------- Bottom nav ---------- */
+.nav{
+  flex-shrink:0;background:var(--surface);border-top:1px solid var(--line);
+  display:flex;padding:7px 4px calc(7px + env(safe-area-inset-bottom));z-index:30;
+}
+.nav button{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:5px 2px;color:var(--ink-faint);transition:color .15s;
+}
+.nav button svg{width:21px;height:21px}
+.nav button .nl{font-size:9.5px;font-weight:600;letter-spacing:.01em}
+.nav button.on{color:var(--accent)}
+
+/* toast */
+.toast{
+  position:absolute;left:50%;bottom:84px;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:#fff;font-size:13px;font-weight:600;
+  padding:11px 18px;border-radius:30px;z-index:60;opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;display:flex;align-items:center;gap:8px;
+  box-shadow:0 8px 30px rgba(21,33,43,.3);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast svg{width:16px;height:16px;color:#6FD3A8}
+
+/* selector options */
+.opt{
+  width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:14px 14px;border:1px solid var(--line);border-radius:11px;margin-bottom:9px;
+  background:var(--surface);text-align:left;transition:.12s;
+}
+.opt:active{transform:scale(.99)}
+.opt.on{border-color:var(--accent);background:var(--accent-tint)}
+.opt .ol{font-size:14px;font-weight:600}
+.opt .os{font-size:11.5px;color:var(--ink-soft);margin-top:1px}
+.opt .ck{color:var(--accent);opacity:0}
+.opt.on .ck{opacity:1}
+.opt.add{border-style:dashed;border-color:var(--accent);color:var(--accent);justify-content:center;font-weight:600;font-size:14px}
+
+/* badges pièce + carte sélectionnée */
+.pbadge{display:inline-block;font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:5px;margin-left:5px;vertical-align:1px}
+.pbadge.a1,.pbadge.a2,.pbadge.a3{background:var(--accent-tint);color:var(--accent-deep)}
+.pbadge.sh{background:var(--amber-tint);color:var(--amber)}
+.act-card.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-tint),var(--shadow)}
+.act-card.dim{opacity:.4}
+.bline.hide{display:none}
+
+/* ---------- Catégorie ---------- */
+.seg{
+  display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:12px;padding:4px;margin-bottom:18px;position:sticky;top:0;z-index:5;
+}
+.seg button{
+  flex:1;padding:9px 6px;border-radius:9px;font-size:12.5px;font-weight:600;
+  color:var(--ink-soft);transition:.15s;line-height:1.15;
+}
+.seg button.on{background:var(--ink);color:#fff}
+.cat-sec-h{display:flex;align-items:baseline;gap:8px;margin:0 2px 4px}
+.cat-sec-h .ti{font-size:15px;font-weight:700}
+.cat-sec-h .badge2{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:5px}
+.cat-sec-h .badge2.prod{background:var(--accent-tint);color:var(--accent-deep)}
+.cat-sec-h .badge2.charge{background:var(--amber-tint);color:var(--amber)}
+.cat-note{font-size:11.5px;color:var(--ink-faint);margin:0 2px 11px;line-height:1.4}
+.cat-row{
+  display:flex;align-items:center;gap:10px;background:var(--surface);
+  border:1px solid var(--line);border-radius:11px;padding:12px 12px 12px 14px;
+  margin-bottom:8px;box-shadow:var(--shadow);transition:transform .1s;
+}
+.cat-row:active{transform:scale(.992)}
+.cat-row .cn{flex:1;font-size:14px;font-weight:600;min-width:0}
+.cat-row .cn small{display:block;font-weight:400;font-size:11px;color:var(--ink-faint);margin-top:1px}
+.quot-pill{font-family:'Spline Sans Mono',monospace;font-size:12px;font-weight:600;color:var(--amber);background:var(--amber-tint);padding:4px 9px;border-radius:7px;white-space:nowrap}
+.cat-row .trash{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--ink-faint);flex-shrink:0}
+.cat-row .trash:active{background:var(--alert-tint);color:var(--alert)}
+.cat-row .chev{color:var(--ink-faint);flex-shrink:0}
+.add-cat{
+  width:100%;border:1.5px dashed var(--line-strong);border-radius:11px;padding:12px;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  color:var(--accent);font-weight:600;font-size:13px;background:transparent;margin-bottom:6px;
+}
+.cat-gap{height:26px}
+
+/* ---------- Dialogue de confirmation ---------- */
+.confirm{
+  position:absolute;left:24px;right:24px;top:50%;z-index:70;
+  background:var(--surface);border-radius:18px;padding:22px 20px 16px;
+  box-shadow:0 20px 60px rgba(21,33,43,.3);max-width:330px;margin:0 auto;
+  transform:translateY(-50%) scale(.92);opacity:0;pointer-events:none;transition:.2s;
+}
+.confirm.show{transform:translateY(-50%) scale(1);opacity:1;pointer-events:auto}
+.confirm .ci{width:46px;height:46px;border-radius:50%;background:var(--alert-tint);color:var(--alert);display:flex;align-items:center;justify-content:center;margin:0 auto 13px}
+.confirm h4{text-align:center;font-size:16px;font-weight:700;margin-bottom:6px}
+.confirm p{text-align:center;font-size:13px;color:var(--ink-soft);line-height:1.45;margin-bottom:18px}
+.confirm p strong{color:var(--ink)}
+.confirm .row{display:flex;gap:10px}
+.confirm .row .btn{flex:1}
+.btn.danger{background:var(--alert);color:#fff}
+
+/* ---------- Documents ---------- */
+.doc-filters{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;-webkit-overflow-scrolling:touch}
+.doc-filters::-webkit-scrollbar{display:none}
+.fchip{
+  padding:8px 13px;border:1px solid var(--line-strong);border-radius:20px;
+  font-size:12.5px;font-weight:600;color:var(--ink-soft);white-space:nowrap;background:var(--surface);transition:.15s;flex-shrink:0;
+}
+.fchip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.fchip.share.on{background:var(--amber);border-color:var(--amber)}
+.doc-search{position:relative;margin-bottom:14px}
+.doc-search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-faint)}
+.doc-search input{width:100%;border:1px solid var(--line-strong);border-radius:11px;padding:11px 13px 11px 38px;font-size:14px;font-family:inherit;background:var(--surface);color:var(--ink)}
+.totstrip{display:flex;gap:9px;margin-bottom:16px}
+.totcard{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 13px;box-shadow:var(--shadow)}
+.totcard .k{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+.totcard .v{font-family:'Spline Sans Mono',monospace;font-weight:600;font-size:16px;margin-top:3px}
+.totcard.prod .v{color:var(--accent)}
+.totcard.charge .v{color:var(--ink)}
+.doc-caption{font-size:11.5px;color:var(--amber);background:var(--amber-tint);border-radius:9px;padding:9px 12px;margin-bottom:13px;line-height:1.4}
+.doc-empty{text-align:center;color:var(--ink-faint);font-size:13px;padding:34px 16px}
+.bline.doc{cursor:pointer}
+.bline.doc .bi .dt{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+
+/* ---------- Export ---------- */
+.exp-intro{font-size:13px;color:var(--ink-soft);margin-bottom:16px;line-height:1.45}
+.exp-group-label{display:flex;align-items:center;gap:9px;margin:18px 2px 11px}
+.exp-group-label .eyebrow{white-space:nowrap}
+.exp-group-label .ln{height:1px;background:var(--line-strong);flex:1}
+.exp-group-label:first-child{margin-top:0}
+.exp-card{
+  width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:13px;
+  margin-bottom:10px;text-align:left;transition:transform .12s;
+}
+.exp-card:active{transform:scale(.99)}
+.exp-card .ic{width:40px;height:40px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--accent-tint);color:var(--accent-deep)}
+.exp-card.list .ic{background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line)}
+.exp-card .ic svg{width:21px;height:21px}
+.exp-card .tx{flex:1}
+.exp-card .tx .t{font-size:14px;font-weight:700;line-height:1.2}
+.exp-card .tx .d{font-size:11.5px;color:var(--ink-soft);margin-top:2px}
+.exp-card .arrow{color:var(--ink-faint)}
+
+.exp-actions{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px}
+.pdf-btn{background:var(--accent);color:#fff;border-radius:10px;padding:10px 15px;font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:7px}
+.pdf-btn:active{background:var(--accent-deep)}
+
+.paper{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px 20px 26px;box-shadow:var(--shadow);margin-bottom:18px}
+.paper-head{border-bottom:2px solid var(--ink);padding-bottom:13px;margin-bottom:16px}
+.paper-head .pid{font-weight:700;font-size:15px}
+.paper-head .pex{font-size:11.5px;color:var(--ink-soft);margin-top:2px}
+.paper-title{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:21px;margin-top:11px;line-height:1.1}
+.rsec{margin-top:18px}
+.rsec-h{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:5px}
+.rrow{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.rrow .lbl{color:var(--ink-soft)}
+.rrow .val{font-family:'Spline Sans Mono',monospace;font-weight:500;white-space:nowrap}
+.rrow.sub{font-weight:700;border-bottom:none;border-top:1.5px solid var(--line-strong);margin-top:2px}
+.rrow.sub .lbl{color:var(--ink)}
+.rrow.big{border:none;border-top:2px solid var(--ink);margin-top:6px;padding-top:12px}
+.rrow.big .lbl{font-weight:700;font-size:15px;color:var(--ink)}
+.rrow.big .val{font-size:20px;font-weight:700;color:var(--accent)}
+.rrow.big.neg .val{color:var(--alert)}
+.val.pos{color:var(--accent)}
+.val.neg{color:var(--ink)}
+.paper-note{font-size:11.5px;color:var(--ink-soft);background:var(--surface-2);border-radius:9px;padding:10px 12px;margin-top:16px;line-height:1.45;border:1px solid var(--line)}
+.ablock{border:1px solid var(--line);border-radius:11px;padding:13px 14px;margin-top:11px;background:var(--surface-2)}
+.ablock .ah{font-weight:700;font-size:13.5px;margin-bottom:7px;display:flex;align-items:center;gap:8px}
+.ablock .ah .pbadge{margin:0}
+.cross{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px}
+.cross th,.cross td{padding:8px 5px;text-align:right;border-bottom:1px solid var(--line)}
+.cross th:first-child,.cross td:first-child{text-align:left}
+.cross thead th{font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint);font-weight:700}
+.cross td{font-family:'Spline Sans Mono',monospace}
+.cross td:first-child{font-family:'Inter',sans-serif;font-weight:500}
+.cross .totcol{font-weight:700;color:var(--ink)}
+.cross tfoot td{font-weight:700;border-top:2px solid var(--ink);border-bottom:none}
+
+/* ---------- Paramètres ---------- */
+.set-group{margin-bottom:22px}
+.set-glabel{display:flex;align-items:center;gap:9px;margin:0 2px 10px}
+.set-glabel .eyebrow{white-space:nowrap}
+.set-glabel .ln{height:1px;background:var(--line-strong);flex:1}
+.set-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.set-row{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--line);width:100%;text-align:left;background:none}
+.set-row:last-child{border-bottom:none}
+.set-row:active{background:var(--surface-2)}
+.set-row .si{width:34px;height:34px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line)}
+.set-row .si svg{width:18px;height:18px}
+.set-row.danger .si{background:var(--alert-tint);color:var(--alert);border-color:var(--alert-tint)}
+.set-row .st{flex:1;min-width:0}
+.set-row .st .a{font-size:14px;font-weight:600;line-height:1.25}
+.set-row .st .b{font-size:11.5px;color:var(--ink-soft);margin-top:2px}
+.set-row.danger .st .a{color:var(--alert)}
+.set-row .sv{font-size:12px;color:var(--ink-faint);font-weight:500;white-space:nowrap}
+.set-row .chev{color:var(--ink-faint);flex-shrink:0}
+.state-badge{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:20px}
+.state-badge.open{background:var(--accent-tint);color:var(--accent-deep)}
+.state-badge.locked{background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line-strong)}
+.set-note{font-size:11.5px;color:var(--ink-faint);margin:9px 4px 0;line-height:1.4}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== Bandeau permanent ===== -->
+  <header class="bandeau">
+    <div class="bandeau-top">
+      <div class="dossier-id">
+        <span class="nom">Marc Hoffmann — Indépendant</span>
+        <span class="sub">Dossier · Luxembourg</span>
+      </div>
+      <span class="brand-dot"></span>
+    </div>
+    <div class="ctx">
+      <button class="ctx-chip" onclick="openSelector('year')">
+        <span class="lbl">Exercice</span>
+        <span class="val" id="ctxYearVal">2026 · Rev. 2025
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+        </span>
+      </button>
+      <button class="ctx-chip" id="ctxAct" onclick="openSelector('act')">
+        <span class="lbl">Activité</span>
+        <span class="val" id="ctxActVal">Toutes
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+        </span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== Viewport ===== -->
+  <main class="viewport" id="viewport">
+
+    <!-- ========== DOSSIER ========== -->
+    <section class="view active" id="v-dossier">
+      <div class="exercice">
+        <div class="eyebrow">Où vous travaillez</div>
+        <h1>Exercice d’imposition 2026</h1>
+        <div class="revenus">Revenus de l’année 2025</div>
+        <div class="exercice-foot">
+          <span class="year-pill on">2026 · Rev. 2025</span>
+          <span class="year-pill" onclick="toast('Bascule vers 2025 — à brancher')">2025 · Rev. 2024</span>
+          <span class="year-pill add" onclick="toast('Ajouter une année — duplique la structure, vide de pièces')">+ Année</span>
+        </div>
+      </div>
+
+      <div class="section-title">
+        <h2>Activités</h2>
+        <span class="count">3 actives sur cet exercice</span>
+      </div>
+
+      <!-- Activité 1 -->
+      <article class="act-card" onclick="openActivity('Activité 1','Conseil & formation','Prestations de services','fr')">
+        <span class="tab">Activité 1</span>
+        <div class="act-head">
+          <div>
+            <div class="libelle">Conseil &amp; formation</div>
+            <div class="nature">Prestations de services</div>
+          </div>
+          <span class="regime-badge franchise">Franchise — sans TVA</span>
+        </div>
+        <div class="act-foot">
+          <div class="act-stats">
+            <div class="act-stat"><span class="n">42</span><span class="k">pièces</span></div>
+            <div class="act-stat"><span class="n">7</span><span class="k">catégories</span></div>
+          </div>
+          <div class="toggle" onclick="event.stopPropagation();togSwitch(this)"><span>Active</span><span class="switch"></span></div>
+        </div>
+      </article>
+
+      <!-- Activité 2 -->
+      <article class="act-card" onclick="openActivity('Activité 2','Vente d’articles','Commerce de détail','tva')">
+        <span class="tab">Activité 2</span>
+        <div class="act-head">
+          <div>
+            <div class="libelle">Vente d’articles</div>
+            <div class="nature">Commerce de détail</div>
+          </div>
+          <span class="regime-badge tva">TVA normale</span>
+        </div>
+        <div class="act-foot">
+          <div class="act-stats">
+            <div class="act-stat"><span class="n">31</span><span class="k">pièces</span></div>
+            <div class="act-stat"><span class="n">9</span><span class="k">catégories</span></div>
+          </div>
+          <div class="toggle" onclick="event.stopPropagation();togSwitch(this)"><span>Active</span><span class="switch"></span></div>
+        </div>
+      </article>
+
+      <!-- Activité 3 -->
+      <article class="act-card" onclick="openActivity('Activité 3','Location meublée','Revenus locatifs','fr')">
+        <span class="tab">Activité 3</span>
+        <div class="act-head">
+          <div>
+            <div class="libelle">Location meublée</div>
+            <div class="nature">Revenus locatifs</div>
+          </div>
+          <span class="regime-badge franchise">Franchise — sans TVA</span>
+        </div>
+        <div class="act-foot">
+          <div class="act-stats">
+            <div class="act-stat"><span class="n">11</span><span class="k">pièces</span></div>
+            <div class="act-stat"><span class="n">4</span><span class="k">catégories</span></div>
+          </div>
+          <div class="toggle" onclick="event.stopPropagation();togSwitch(this)"><span>Active</span><span class="switch"></span></div>
+        </div>
+      </article>
+
+      <button class="add-card" onclick="toast('Créer une activité (jusqu’à 5+) — à brancher')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        Créer une activité
+      </button>
+
+      <div class="section-title" id="piecesTitle" style="margin-top:26px">
+        <h2>Dernières pièces</h2>
+        <span class="count" id="piecesCount">7 pièces · toutes activités</span>
+      </div>
+      <div id="piecesList">
+        <div class="bline" data-act="1" onclick="openPiece('Facture client — Sàrl Weber','14/12/2025','+1 450,00 €','produit','act','fr','Prestations de services')">
+          <div class="bi"><div class="lab">Facture client — Sàrl Weber</div><div class="dt">14/12/2025 · Prestations de services <span class="pbadge a1">A1</span></div></div>
+          <div class="amt pos">+1 450,00</div>
+        </div>
+        <div class="bline" data-act="2" onclick="openPiece('Vente articles — A. Klein','12/12/2025','+320,00 €','produit','act','tva','Ventes de marchandises')">
+          <div class="bi"><div class="lab">Vente articles — A. Klein</div><div class="dt">12/12/2025 · Ventes de marchandises <span class="pbadge a2">A2</span></div></div>
+          <div class="amt pos">+320,00</div>
+        </div>
+        <div class="bline" data-act="2" onclick="openPiece('Aral — Carburant','09/12/2025','−78,40 €','charge','act','tva','Carburant & véhicule')">
+          <div class="bi"><div class="lab">Aral — Carburant</div><div class="dt">09/12/2025 · Carburant &amp; véhicule <span class="pbadge a2">A2</span></div></div>
+          <div class="amt neg">−78,40</div>
+        </div>
+        <div class="bline" data-act="share" onclick="openPiece('POST Luxembourg — Téléphonie','03/12/2025','−62,10 €','charge','share','fr','Téléphonie & internet')">
+          <div class="bi"><div class="lab">POST Luxembourg — Téléphonie</div><div class="dt">03/12/2025 · Téléphonie <span class="pbadge sh">Partagé · 40/30/30</span></div></div>
+          <div class="amt neg">−62,10</div>
+        </div>
+        <div class="bline" data-act="2" onclick="openPiece('Cactus — Fournitures','28/11/2025','−41,90 €','charge','act','tva','Fournitures de bureau')">
+          <div class="bi"><div class="lab">Cactus — Fournitures</div><div class="dt">28/11/2025 · Fournitures de bureau <span class="pbadge a2">A2</span></div></div>
+          <div class="amt neg">−41,90</div>
+        </div>
+        <div class="bline" data-act="3" onclick="openPiece('Loyer — Atelier','22/11/2025','−650,00 €','charge','act','fr','Loyer & charges')">
+          <div class="bi"><div class="lab">Loyer — Atelier</div><div class="dt">22/11/2025 · Loyer &amp; charges <span class="pbadge a3">A3</span></div></div>
+          <div class="amt neg">−650,00</div>
+        </div>
+        <div class="bline" data-act="share" onclick="openPiece('Honoraires comptables','15/11/2025','−180,00 €','charge','share','fr','Honoraires & sous-traitance')">
+          <div class="bi"><div class="lab">Honoraires comptables</div><div class="dt">15/11/2025 · Honoraires <span class="pbadge sh">Partagé · 50/30/20</span></div></div>
+          <div class="amt neg">−180,00</div>
+        </div>
+      </div>
+
+      <div class="id-card">
+        <div class="eyebrow" style="margin-bottom:9px">Identité du dossier</div>
+        <div class="id-grid">
+          <div class="id-item"><div class="k">Matricule</div><div class="v mono">1985 12 34 567</div></div>
+          <div class="id-item"><div class="k">N° TVA</div><div class="v mono">LU 1234 5678</div></div>
+          <div class="id-item"><div class="k">N° RCS</div><div class="v mono">B 234 567</div></div>
+          <div class="id-item"><div class="k">Régime fiscal</div><div class="v">Personne physique</div></div>
+          <div class="id-item full"><div class="k">Adresse</div><div class="v">12 rue de l’Alzette · L-4011 Esch-sur-Alzette</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== SCAN ========== -->
+    <section class="view" id="v-scan">
+      <!-- niveau 1 : choix activité / dossier -->
+      <div class="subview active" id="scan-home">
+        <p class="scan-intro">Déposez une pièce. Choisissez d’abord <strong>à quelle activité</strong> elle se rattache — ou un dépôt au niveau du dossier.</p>
+
+        <button class="big-btn" onclick="openScanMenu('Activité 1','Conseil & formation','fr')">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg></span>
+          <span class="txt"><span class="t">Activité 1</span><span class="d">Conseil &amp; formation</span><span class="tva-tag fr">Franchise — sans TVA</span></span>
+          <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+
+        <button class="big-btn" onclick="openScanMenu('Activité 2','Vente d’articles','tva')">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg></span>
+          <span class="txt"><span class="t">Activité 2</span><span class="d">Vente d’articles</span><span class="tva-tag">TVA normale</span></span>
+          <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+
+        <button class="big-btn" onclick="openScanMenu('Activité 3','Location meublée','fr')">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg></span>
+          <span class="txt"><span class="t">Activité 3</span><span class="d">Location meublée</span><span class="tva-tag fr">Franchise — sans TVA</span></span>
+          <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+
+        <div class="dossier-level">
+          <div class="lvl-label"><span class="eyebrow">Au niveau du dossier</span><span class="ln"></span></div>
+
+          <button class="big-btn shared" onclick="openScanMenu('Frais communs','Réparti entre activités','share')">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.6 10.6l6.8-3.2M8.6 13.4l6.8 3.2"/></svg></span>
+            <span class="txt"><span class="t">Frais communs / partagés</span><span class="d">Une pièce, répartie sur plusieurs activités</span></span>
+            <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg></span>
+          </button>
+
+          <button class="big-btn bank" onclick="go('bank')">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-6 9 6M5 10v9h14v-9M9 19v-5h6v5"/></svg></span>
+            <span class="txt"><span class="t">Import CSV bancaire</span><span class="d">Par banque · contrôle entrées / sorties</span></span>
+            <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg></span>
+          </button>
+
+          <button class="big-btn" onclick="openFiscal()">
+            <span class="ic" style="background:var(--amber-tint);color:var(--amber)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg></span>
+            <span class="txt"><span class="t">Données fiscales annuelles</span><span class="d">CCSS, dépenses spéciales, avances ACD</span></span>
+            <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- niveau 2 : types de documents -->
+      <div class="subview" id="scan-menu">
+        <button class="back-btn" onclick="backToScanHome()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 6l-6 6 6 6"/></svg> Retour
+        </button>
+        <div class="scan-ctx-bar">
+          <span class="badge" id="menuBadge">Activité 1</span>
+          <span class="nm" id="menuName">Conseil &amp; formation<small id="menuRegime">Franchise — sans TVA</small></span>
+        </div>
+
+        <div class="group">
+          <div class="group-h">Factures</div>
+          <div class="tile-row">
+            <button class="tile" onclick="openSheet('Facture d’achat','charge')">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg></span>
+              <span class="t">Facture d’achat</span>
+              <span class="d">Charge</span>
+            </button>
+            <button class="tile" onclick="openSheet('Facture de vente','produit')">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M12 11v6M9 14l3-3 3 3"/></svg></span>
+              <span class="t">Facture de vente</span>
+              <span class="d">Produit · recette</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="group-h">Tickets</div>
+          <div class="tile-row">
+            <button class="tile" onclick="openSheet('Ticket restaurant','charge')">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 2v8a3 3 0 006 0V2M8 2v20M19 2c-2 0-3 2-3 5s1 4 3 4v11"/></svg></span>
+              <span class="t">Ticket restaurant</span>
+              <span class="d">Charge</span>
+            </button>
+            <button class="tile" onclick="openSheet('Ticket carburant','charge')">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 22V5a2 2 0 012-2h6a2 2 0 012 2v17M4 22h12M15 9h2a2 2 0 012 2v6a1.5 1.5 0 003 0v-7l-3-3"/></svg></span>
+              <span class="t">Ticket carburant</span>
+              <span class="d">Charge</span>
+            </button>
+            <button class="tile full info" onclick="openSheet('Autre ticket','charge')">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l2-3h12l2 3v13H4z"/><path d="M8 11h8"/></svg></span>
+              <span class="t">Autre ticket</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="group-h">Autres pièces</div>
+          <div class="tile-row">
+            <button class="tile full" onclick="openSheet('Document fiscal','charge')">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>
+              <span class="t">Document fiscal <span class="d" style="display:block;font-weight:400">Avec chiffres à retenir</span></span>
+            </button>
+            <button class="tile full info" onclick="openSheet('Pièce non comptable','aucun')">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg></span>
+              <span class="t">Pièce non comptable <span class="d" style="display:block;font-weight:400">Informatif · sans montant</span></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- sous-écran : contrôle bancaire -->
+      <div class="subview" id="scan-bank">
+        <button class="back-btn" onclick="backToScanHome()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 6l-6 6 6 6"/></svg> Retour
+        </button>
+        <div class="section-title" style="margin-top:2px"><h2>Contrôle bancaire</h2></div>
+
+        <div class="bank-import">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-6 9 6M5 10v9h14v-9"/></svg></span>
+          <span class="t"><span class="a">BIL — Compte courant</span><span class="b">Relevé 01–31/12/2025 · 64 lignes</span></span>
+          <button class="mini-btn" onclick="toast('Importer un autre CSV — à brancher')">Importer</button>
+        </div>
+
+        <div class="pile in">
+          <div class="pile-h"><span class="dot"></span><span class="ti">Entrées (crédits)</span><span class="ct">vs ventes scannées</span></div>
+          <div class="bline">
+            <div class="bi"><div class="lab">Virement client — Sàrl Weber</div><div class="dt">14/12/2025</div>
+              <span class="bstatus ok"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg> Vente rapprochée</span></div>
+            <div class="amt pos">+1 450,00</div>
+          </div>
+          <div class="bline">
+            <div class="bi"><div class="lab">Virement client — A. Klein</div><div class="dt">22/12/2025</div>
+              <span class="bstatus miss">Vente manquante à scanner</span></div>
+            <button class="attr-btn" onclick="toast('Créer la pièce de vente depuis cette ligne — à brancher')">Créer la pièce</button>
+          </div>
+        </div>
+
+        <div class="pile out">
+          <div class="pile-h"><span class="dot"></span><span class="ti">Sorties (débits)</span><span class="ct">vs charges scannées</span></div>
+          <div class="bline">
+            <div class="bi"><div class="lab">POST Luxembourg — Téléphonie</div><div class="dt">03/12/2025</div>
+              <span class="bstatus miss">Justificatif manquant</span></div>
+            <button class="attr-btn" onclick="toast('Créer la pièce depuis cette ligne — à brancher')">Créer la pièce</button>
+          </div>
+          <div class="bline">
+            <div class="bi"><div class="lab">Aral — Carburant</div><div class="dt">09/12/2025</div>
+              <span class="bstatus ok"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg> Charge rapprochée</span></div>
+            <div class="amt neg">−78,40</div>
+          </div>
+        </div>
+
+        <div class="pile todo">
+          <div class="pile-h"><span class="dot"></span><span class="ti">À classer</span><span class="ct">attribuer une activité</span></div>
+          <div class="bline">
+            <div class="bi"><div class="lab">Achat fournitures — Cactus</div><div class="dt">17/12/2025</div>
+              <span class="bstatus wait">Activité non attribuée</span></div>
+            <button class="attr-btn" onclick="toast('Attribuer : Activité 1 / 2 / 3 ou partagé — à brancher')">Attribuer</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== Onglets en attente ========== -->
+    <section class="view" id="v-categorie">
+      <div class="seg" id="catSeg">
+        <button data-a="1" class="on" onclick="setCatActivity('1')">Activité 1<br>Conseil</button>
+        <button data-a="2" onclick="setCatActivity('2')">Activité 2<br>Vente</button>
+        <button data-a="3" onclick="setCatActivity('3')">Activité 3<br>Location</button>
+      </div>
+
+      <div class="cat-sec-h"><span class="ti">Produits</span><span class="badge2 prod">Recettes</span></div>
+      <div class="cat-note">Les recettes de l’activité. Pas de quotité — une vente est intégralement comptabilisée.</div>
+      <div id="catProduits"></div>
+      <button class="add-cat" onclick="openCatEdit('produit',-1)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        Ajouter un produit
+      </button>
+
+      <div class="cat-gap"></div>
+
+      <div class="cat-sec-h"><span class="ti">Charges</span><span class="badge2 charge">Dépenses</span></div>
+      <div class="cat-note">La quotité professionnelle par défaut se reporte automatiquement sur chaque pièce de la catégorie — modifiable pièce par pièce.</div>
+      <div id="catCharges"></div>
+      <button class="add-cat" onclick="openCatEdit('charge',-1)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        Ajouter une charge
+      </button>
+    </section>
+    <section class="view" id="v-documents">
+      <div class="doc-filters" id="docFilters">
+        <button class="fchip on" data-f="all" onclick="setDocFilter('all')">Toutes</button>
+        <button class="fchip" data-f="1" onclick="setDocFilter('1')">Activité 1</button>
+        <button class="fchip" data-f="2" onclick="setDocFilter('2')">Activité 2</button>
+        <button class="fchip" data-f="3" onclick="setDocFilter('3')">Activité 3</button>
+        <button class="fchip share" data-f="share" onclick="setDocFilter('share')">Partagés</button>
+      </div>
+      <div class="doc-search">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input id="docQuery" placeholder="Rechercher une pièce…" oninput="renderDocs()">
+      </div>
+      <div class="totstrip">
+        <div class="totcard prod"><div class="k">Produits</div><div class="v" id="totProd">+0,00</div></div>
+        <div class="totcard charge"><div class="k">Charges</div><div class="v" id="totCharge">−0,00</div></div>
+      </div>
+      <div class="doc-caption" id="docCaption" style="display:none"></div>
+      <div id="docsList"></div>
+    </section>
+    <section class="view" id="v-export">
+      <!-- menu des exports -->
+      <div class="subview active" id="export-home">
+        <p class="exp-intro">Visualisez un état à l’écran, puis exportez-le en PDF. Les pièces partagées sont réparties et la quotité professionnelle est appliquée automatiquement.</p>
+
+        <div class="exp-group-label"><span class="eyebrow">Résultats</span><span class="ln"></span></div>
+        <button class="exp-card" onclick="openReport('crGlobal')">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M4 19h16M8 16V9M12 16v-4M16 16v-7"/></svg></span>
+          <span class="tx"><span class="t">Compte de résultats — global</span><span class="d">Produits − charges déductibles</span></span>
+          <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+        <button class="exp-card" onclick="openReport('crActivite')">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+          <span class="tx"><span class="t">Compte de résultats — par activité</span><span class="d">Le détail activité par activité</span></span>
+          <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+        <button class="exp-card" onclick="openReport('bilan')">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M5 8l7-5 7 5M5 8v8l7 5 7-5V8"/></svg></span>
+          <span class="tx"><span class="t">Bilan entrées / sorties</span><span class="d">Trésorerie encaissée − décaissée</span></span>
+          <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+
+        <div class="exp-group-label"><span class="eyebrow">Listings</span><span class="ln"></span></div>
+        <button class="exp-card list" onclick="openReport('fraisDetail')">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>
+          <span class="tx"><span class="t">Frais par catégorie &amp; activité</span><span class="d">Détail + totaux, par activité</span></span>
+          <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+        <button class="exp-card list" onclick="openReport('fraisGlobaux')">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg></span>
+          <span class="tx"><span class="t">Frais globaux</span><span class="d">Toutes activités confondues</span></span>
+          <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+        <button class="exp-card list" onclick="openReport('repartition')">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg></span>
+          <span class="tx"><span class="t">Répartition</span><span class="d">Tableau croisé catégories × activités</span></span>
+          <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+
+        <div class="exp-group-label"><span class="eyebrow">Déclaration</span><span class="ln"></span></div>
+        <button class="exp-card" onclick="openReport('fiscal')">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3 8-8M21 12v6a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2h11"/></svg></span>
+          <span class="tx"><span class="t">Données fiscales de l’exercice</span><span class="d">CCSS, dépenses spéciales, avances</span></span>
+          <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+        <button class="exp-card" onclick="openReport('declaration')">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg></span>
+          <span class="tx"><span class="t">Déclaration fiscale — modèle 100</span><span class="d">Bénéfices → revenu imposable</span></span>
+          <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+      </div>
+
+      <!-- visualiseur d'un rapport -->
+      <div class="subview" id="export-doc">
+        <div class="exp-actions">
+          <button class="back-btn" style="margin:0" onclick="showExp('export-home')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 6l-6 6 6 6"/></svg> Retour
+          </button>
+          <button class="pdf-btn" onclick="toast('PDF généré — simulation')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M8 11l4 4 4-4M5 21h14"/></svg> Exporter en PDF
+          </button>
+        </div>
+        <div class="paper" id="paperBody"></div>
+      </div>
+    </section>
+    <section class="view" id="v-param">
+      <div class="set-group">
+        <div class="set-glabel"><span class="eyebrow">Exercice 2026 · Revenus 2025</span><span class="ln"></span></div>
+        <div class="set-card">
+          <div class="set-row">
+            <span class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>
+            <span class="st"><span class="a">État de l’exercice</span><span class="b">Modifiable tant qu’il est ouvert</span></span>
+            <span class="state-badge open" id="yearState">Ouvert</span>
+          </div>
+          <button class="set-row" onclick="clotureExercice()">
+            <span class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></span>
+            <span class="st"><span class="a">Clôturer l’exercice</span><span class="b">Passage en lecture seule · déverrouillage protégé</span></span>
+            <span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></span>
+          </button>
+          <button class="set-row danger" onclick="razPieces()">
+            <span class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg></span>
+            <span class="st"><span class="a">Remettre les pièces à zéro</span><span class="b">Vide les pièces · conserve activités &amp; catégories</span></span>
+            <span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></span>
+          </button>
+        </div>
+        <div class="set-note">L’ajout de nouvelles années se fait depuis l’onglet Dossier.</div>
+      </div>
+
+      <div class="set-group">
+        <div class="set-glabel"><span class="eyebrow">Banques &amp; comptes</span><span class="ln"></span></div>
+        <div class="set-card">
+          <div class="set-row">
+            <span class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-6 9 6M5 10v9h14v-9"/></svg></span>
+            <span class="st"><span class="a">BIL — Compte courant</span><span class="b">LU•• •••• •••• •••• 1234</span></span>
+            <span class="sv">CSV</span>
+          </div>
+          <button class="set-row" onclick="toast('Ajouter un compte bancaire — à brancher')">
+            <span class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span>
+            <span class="st"><span class="a">Ajouter un compte</span><span class="b">Pour l’import des relevés CSV</span></span>
+            <span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <div class="set-glabel"><span class="eyebrow">Sauvegardes</span><span class="ln"></span></div>
+        <div class="set-card">
+          <button class="set-row" onclick="toast('Sauvegarde globale exportée — simulation')">
+            <span class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M8 11l4 4 4-4M5 21h14"/></svg></span>
+            <span class="st"><span class="a">Sauvegarde globale</span><span class="b">Tout le dossier · toutes les années</span></span>
+            <span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></span>
+          </button>
+          <button class="set-row" onclick="toast('Sauvegarde de l’exercice 2026 exportée — simulation')">
+            <span class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M12 13v5M9.5 15.5L12 18l2.5-2.5"/></svg></span>
+            <span class="st"><span class="a">Sauvegarde par année</span><span class="b">Le seul exercice 2026</span></span>
+            <span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></span>
+          </button>
+          <button class="set-row" onclick="toast('Importer une sauvegarde — à brancher')">
+            <span class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3M8 7l4-4 4 4M5 21h14"/></svg></span>
+            <span class="st"><span class="a">Importer une sauvegarde</span><span class="b">Restaurer depuis un fichier</span></span>
+            <span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <div class="set-glabel"><span class="eyebrow">Années</span><span class="ln"></span></div>
+        <div class="set-card">
+          <div class="set-row"><span class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span><span class="st"><span class="a">2026 · Revenus 2025</span><span class="b">Exercice courant</span></span><span class="state-badge open">Ouvert</span></div>
+          <div class="set-row"><span class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span><span class="st"><span class="a">2025 · Revenus 2024</span><span class="b">Exercice précédent</span></span><span class="state-badge locked">Clôturé</span></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== Bottom sheet : fiche d’édition ===== -->
+  <div class="scrim" id="scrim" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head">
+      <span class="ti" id="sheetTitle">Facture d’achat</span>
+      <button class="x" onclick="closeSheet()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="sheet-body" id="sheetBody">
+      <div class="doc-preview">
+        <div class="lines"></div>
+        <div class="stamp">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 8h18M8 3v18"/></svg>
+          <span>Aperçu du document scanné</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Libellé</label>
+        <input class="inp" id="fLib" value="Saisie automatique…" >
+      </div>
+      <div class="field">
+        <label>Catégorie</label>
+        <select class="sel" id="sheetCat"></select>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Date du document</label><input class="inp mono-inp" id="fDate" value="14/12/2025"></div>
+        <div class="field"><label>Montant</label><input class="inp mono-inp" id="fMont" value="0,00 €"></div>
+      </div>
+
+      <!-- quotité pro : charges seulement -->
+      <div class="field" id="quotiteField">
+        <label>Quotité professionnelle</label>
+        <input class="inp mono-inp" value="100 %">
+        <div class="hint">Part professionnelle déductible. Pré-remplie selon la catégorie.</div>
+      </div>
+
+      <!-- TVA : si activité assujettie -->
+      <div class="cond tva" id="tvaBlock" style="display:none">
+        <div class="cond-h"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8l8 8M16 8l-8 8"/></svg> TVA</span></div>
+        <div class="desc">Activité au régime <strong>TVA normale</strong> — la TVA est saisie et déductible.</div>
+        <div class="field-row">
+          <div class="field" style="margin-bottom:0"><label>Montant HT</label><input class="inp mono-inp" value="0,00 €"></div>
+          <div class="field" style="margin-bottom:0"><label>Taux</label>
+            <select class="sel"><option>17 %</option><option>14 %</option><option>8 %</option><option>3 %</option><option>0 %</option></select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Répartition : frais communs -->
+      <div class="cond share" id="shareBlock" style="display:none">
+        <div class="cond-h"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.6 10.6l6.8-3.2M8.6 13.4l6.8 3.2"/></svg> Affectation aux activités</span></div>
+        <div class="desc">Répartissez la part professionnelle entre les activités concernées. Le total doit faire 100 %.</div>
+        <div class="repart">
+          <div class="repart-row"><span class="anm">Activité 1 · Conseil</span><span class="pct"><input class="rp mono" value="40" oninput="sumRepart()"><span>%</span></span></div>
+          <div class="repart-row"><span class="anm">Activité 2 · Vente</span><span class="pct"><input class="rp mono" value="30" oninput="sumRepart()"><span>%</span></span></div>
+          <div class="repart-row"><span class="anm">Activité 3 · Location</span><span class="pct"><input class="rp mono" value="30" oninput="sumRepart()"><span>%</span></span></div>
+          <div class="repart-sum"><span>Total</span><span id="repartSum" class="ok mono">100 %</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn ghost" id="deletePiece" style="display:none;color:var(--alert);border-color:var(--alert-tint)" onclick="closeAll();setTimeout(()=>askConfirm('cette pièce',()=>toast('Pièce supprimée')),200)">Supprimer</button>
+      <button class="btn ghost" onclick="closeSheet()">Annuler</button>
+      <button class="btn primary" onclick="saveSheet()">Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- ===== Fiche d'édition d'une catégorie ===== -->
+  <div class="sheet" id="catSheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head">
+      <span class="ti" id="catSheetTitle">Catégorie</span>
+      <button class="x" onclick="closeAll()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="sheet-body">
+      <div class="field"><label>Nom de la catégorie</label><input class="inp" id="catNom"></div>
+      <div class="field" id="catSectionField">
+        <label>Versant</label>
+        <div class="cat-note" id="catSectionLbl" style="margin:0;font-size:13px;color:var(--ink)"></div>
+      </div>
+      <div class="field" id="catQuotField">
+        <label>Quotité professionnelle par défaut</label>
+        <input class="inp mono-inp" id="catQuot" value="100 %">
+        <div class="hint">S’applique d’office aux nouvelles pièces de cette catégorie.</div>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn ghost" id="catDelete" style="display:none;color:var(--alert);border-color:var(--alert-tint)" onclick="deleteCat()">Supprimer</button>
+      <button class="btn ghost" onclick="closeAll()">Annuler</button>
+      <button class="btn primary" onclick="saveCat()">Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- ===== Sélecteur (année / activité) ===== -->
+  <div class="sheet sel-sheet" id="selSheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head">
+      <span class="ti" id="selTitle">Choisir</span>
+      <button class="x" onclick="closeAll()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="sheet-body" id="selBody" style="padding-bottom:22px"></div>
+  </div>
+
+  <!-- ===== Fiche d'édition d'une activité ===== -->
+  <div class="sheet" id="actSheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head">
+      <span class="ti" id="actSheetTitle">Activité</span>
+      <button class="x" onclick="closeAll()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="sheet-body">
+      <div class="field"><label>Libellé de l’activité</label><input class="inp" id="actLib"></div>
+      <div class="field"><label>Nature</label><input class="inp" id="actNat"></div>
+      <div class="field"><label>Régime TVA / fiscal</label>
+        <select class="sel" id="actReg">
+          <option value="fr">Franchise — sans TVA</option>
+          <option value="tva">TVA normale</option>
+        </select>
+        <div class="hint">Détermine l’affichage de la TVA sur les pièces de cette activité.</div>
+      </div>
+      <div class="cond" style="display:flex;align-items:center;justify-content:space-between;background:var(--surface-2)">
+        <div><div style="font-size:13px;font-weight:600">Active sur l’exercice 2026</div><div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">Décochez si l’activité n’existait pas cette année-là.</div></div>
+        <span class="switch" onclick="this.classList.toggle('off')"></span>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn ghost" style="color:var(--alert);border-color:var(--alert-tint)" onclick="closeAll();setTimeout(()=>askConfirm('cette activité et ses pièces',()=>toast('Activité supprimée')),200)">Supprimer</button>
+      <button class="btn primary" onclick="closeAll();setTimeout(()=>toast('Activité enregistrée'),180)">Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- ===== Fiche : données fiscales annuelles ===== -->
+  <div class="sheet" id="fiscalSheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head">
+      <span class="ti">Données fiscales — 2026</span>
+      <button class="x" onclick="closeAll()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="sheet-body">
+      <button class="mini-btn" style="width:100%;padding:11px;margin-bottom:16px" onclick="toast('Import de l’extrait CCSS — à brancher')">Importer l’extrait CCSS (PDF / fichier)</button>
+      <div class="cond" style="background:var(--surface-2)">
+        <div class="cond-h"><span class="ti">Cotisations CCSS</span></div>
+        <div class="field" style="margin-bottom:10px"><label>Assurance pension</label><input class="inp mono-inp" value="720,00 €"></div>
+        <div class="field" style="margin-bottom:10px"><label>Assurance maladie (soins + espèces)</label><input class="inp mono-inp" value="360,00 €"></div>
+        <div class="field" style="margin-bottom:0"><label>Assurance dépendance</label><input class="inp mono-inp" value="120,00 €"></div>
+      </div>
+      <div class="cond" style="background:var(--surface-2)">
+        <div class="cond-h"><span class="ti">Dépenses spéciales</span></div>
+        <div class="field" style="margin-bottom:10px"><label>Assurances (RC pro, vie)</label><input class="inp mono-inp" value="480,00 €"></div>
+        <div class="field" style="margin-bottom:0"><label>Prévoyance-vieillesse (art. 111bis)</label><input class="inp mono-inp" value="192,00 €"></div>
+      </div>
+      <div class="field"><label>Avances d’impôt versées (ACD)</label><input class="inp mono-inp" value="1 200,00 €"><div class="hint">Pour information — régularisées au décompte, non déductibles.</div></div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn ghost" onclick="closeAll()">Annuler</button>
+      <button class="btn primary" onclick="closeAll();setTimeout(()=>toast('Données fiscales enregistrées'),180)">Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- ===== Confirmation ===== -->
+  <div class="confirm" id="confirmBox">
+    <div class="ci"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></div>
+    <h4 id="confirmTitle">Supprimer ?</h4>
+    <p id="confirmMsg"></p>
+    <div class="row">
+      <button class="btn ghost" style="flex:1" onclick="hideConfirm()">Annuler</button>
+      <button class="btn danger" id="confirmBtn" onclick="doConfirm()">Supprimer</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg><span id="toastMsg">Enregistré</span></div>
+
+  <!-- ===== Bottom nav ===== -->
+  <nav class="nav" id="nav">
+    <button class="on" data-v="dossier" onclick="tab('dossier',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      <span class="nl">Dossier</span>
+    </button>
+    <button data-v="scan" onclick="tab('scan',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M3 12h18"/></svg>
+      <span class="nl">Scan</span>
+    </button>
+    <button data-v="categorie" onclick="tab('categorie',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+      <span class="nl">Catégorie</span>
+    </button>
+    <button data-v="documents" onclick="tab('documents',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg>
+      <span class="nl">Documents</span>
+    </button>
+    <button data-v="export" onclick="tab('export',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M8 11l4 4 4-4M5 21h14"/></svg>
+      <span class="nl">Export</span>
+    </button>
+    <button data-v="param" onclick="tab('param',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>
+      <span class="nl">Param.</span>
+    </button>
+  </nav>
+
+</div>
+
+<script>
+/* ---------- Données d'exemple des catégories (Produits / Charges) ---------- */
+const CATS = {
+  produit: ['Ventes de marchandises','Prestations de services','Produits divers'],
+  charge: ['Achats de marchandises','Téléphonie & internet','Carburant & véhicule','Repas & représentation','Fournitures de bureau','Honoraires & sous-traitance','Loyer & charges'],
+  aucun: ['— Sans catégorie comptable —']
+};
+
+let currentRegime = 'fr';   // 'fr' (franchise) ou 'tva'
+let currentScope  = 'act';  // 'act' ou 'share'
+
+/* ---------- Données catégories (socle par défaut, par activité) ---------- */
+const CATDATA = {
+  '1':{ produit:['Prestations de services','Honoraires','Produits divers'],
+        charge:[{n:'Téléphonie & internet',q:75},{n:'Carburant & véhicule',q:75},
+                {n:'Repas & représentation',q:50},{n:'Fournitures de bureau',q:100},
+                {n:'Honoraires & sous-traitance',q:100},{n:'Formation & documentation',q:100}] },
+  '2':{ produit:['Ventes de marchandises','Prestations de services','Produits divers'],
+        charge:[{n:'Achats de marchandises',q:100},{n:'Téléphonie & internet',q:75},
+                {n:'Carburant & véhicule',q:75},{n:'Emballages & expéditions',q:100},
+                {n:'Fournitures de bureau',q:100},{n:'Loyer & charges',q:100}] },
+  '3':{ produit:['Loyers perçus','Produits divers'],
+        charge:[{n:'Entretien & réparations',q:100},{n:'Assurances',q:100},
+                {n:'Charges de copropriété',q:100},{n:'Intérêts d’emprunt',q:100}] }
+};
+const ACT_LABEL = {'1':'Activité 1 · Conseil','2':'Activité 2 · Vente','3':'Activité 3 · Location'};
+let currentCatAct = '1';
+let catEditRef = null; // {section, index}
+
+/* ---------- Données documents (pièces encodées) ---------- */
+const DOCS = [
+  {lib:'Facture client — Sàrl Weber', date:'14/12/2025', cat:'Prestations de services', kind:'produit', act:'1', reg:'fr', m:1450},
+  {lib:'Honoraires — mission audit', date:'05/12/2025', cat:'Honoraires', kind:'produit', act:'1', reg:'fr', m:900},
+  {lib:'Vente articles — A. Klein', date:'12/12/2025', cat:'Ventes de marchandises', kind:'produit', act:'2', reg:'tva', m:320},
+  {lib:'Vente comptoir — décembre', date:'20/12/2025', cat:'Ventes de marchandises', kind:'produit', act:'2', reg:'tva', m:1180},
+  {lib:'Loyers perçus — décembre', date:'31/12/2025', cat:'Loyers perçus', kind:'produit', act:'3', reg:'fr', m:780},
+  {lib:'Aral — Carburant', date:'09/12/2025', cat:'Carburant & véhicule', kind:'charge', act:'2', reg:'tva', m:-78.40, q:75},
+  {lib:'Cactus — Fournitures', date:'28/11/2025', cat:'Fournitures de bureau', kind:'charge', act:'2', reg:'tva', m:-41.90, q:100},
+  {lib:'Achat marchandises — Metro', date:'18/11/2025', cat:'Achats de marchandises', kind:'charge', act:'2', reg:'tva', m:-540, q:100},
+  {lib:'Entretien — plombier', date:'26/11/2025', cat:'Entretien & réparations', kind:'charge', act:'3', reg:'fr', m:-210, q:100},
+  {lib:'Assurance — bien loué', date:'02/12/2025', cat:'Assurances', kind:'charge', act:'3', reg:'fr', m:-95, q:100},
+  {lib:'Formation — séminaire IA', date:'21/11/2025', cat:'Formation & documentation', kind:'charge', act:'1', reg:'fr', m:-350, q:100},
+  {lib:'POST Luxembourg — Téléphonie', date:'03/12/2025', cat:'Téléphonie & internet', kind:'charge', act:'share', reg:'fr', m:-62.10, q:75, split:{'1':40,'2':30,'3':30}},
+  {lib:'Honoraires comptables', date:'15/11/2025', cat:'Honoraires & sous-traitance', kind:'charge', act:'share', reg:'fr', m:-180, q:100, split:{'1':50,'2':30,'3':20}}
+];
+let docFilter = 'all';
+
+/* ---------- Export : calculs réels depuis les pièces ---------- */
+function fmt(n){ return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+const ACTNAME = {'1':'Activité 1 · Conseil','2':'Activité 2 · Vente','3':'Activité 3 · Location'};
+
+function computeData(){
+  const by = {'1':{prod:0,cf:0,cd:0},'2':{prod:0,cf:0,cd:0},'3':{prod:0,cf:0,cd:0}};
+  const cross = {}, globalCat = {}, detail = {'1':{},'2':{},'3':{}};
+  function addCharge(act,cat,full,deduct){
+    by[act].cf+=full; by[act].cd+=deduct;
+    cross[cat]=cross[cat]||{'1':0,'2':0,'3':0}; cross[cat][act]+=full;
+    globalCat[cat]=(globalCat[cat]||0)+full;
+    detail[act][cat]=(detail[act][cat]||0)+full;
+  }
+  DOCS.forEach(d=>{
+    if(d.m>=0){ if(by[d.act]) by[d.act].prod+=d.m; return; }
+    const base=Math.abs(d.m), q=(d.q!=null?d.q:100)/100;
+    if(d.act==='share'){ for(const a in d.split){ const p=base*d.split[a]/100; addCharge(a,d.cat,p,p*q); } }
+    else addCharge(d.act,d.cat,base,base*q);
+  });
+  return {by,cross,globalCat,detail};
+}
+function paperHead(title){
+  return `<div class="paper-head">
+    <div class="pid">Marc Hoffmann — Indépendant</div>
+    <div class="pex">Exercice d’imposition 2026 · Revenus 2025 · Luxembourg</div>
+    <div class="paper-title">${title}</div></div>`;
+}
+
+/* ---------- Générateurs ---------- */
+function repCrGlobal(){
+  const {by}=computeData();
+  const pT=by['1'].prod+by['2'].prod+by['3'].prod;
+  const cdT=by['1'].cd+by['2'].cd+by['3'].cd;
+  const res=pT-cdT;
+  let h=paperHead('Compte de résultats — global');
+  h+=`<div class="rsec"><div class="rsec-h">Produits (recettes)</div>`;
+  ['1','2','3'].forEach(a=>h+=`<div class="rrow"><span class="lbl">${ACTNAME[a]}</span><span class="val pos">+${fmt(by[a].prod)}</span></div>`);
+  h+=`<div class="rrow sub"><span class="lbl">Total produits</span><span class="val pos">+${fmt(pT)}</span></div></div>`;
+  h+=`<div class="rsec"><div class="rsec-h">Charges déductibles (après quotité)</div>`;
+  ['1','2','3'].forEach(a=>h+=`<div class="rrow"><span class="lbl">${ACTNAME[a]}</span><span class="val neg">−${fmt(by[a].cd)}</span></div>`);
+  h+=`<div class="rrow sub"><span class="lbl">Total charges déductibles</span><span class="val neg">−${fmt(cdT)}</span></div></div>`;
+  h+=`<div class="rrow big"><span class="lbl">Résultat fiscal</span><span class="val">${fmt(res)}</span></div>`;
+  h+=`<div class="paper-note">Les charges sont retenues après application de la quotité professionnelle de chaque catégorie. Les frais partagés sont ventilés entre activités selon leur clé de répartition.</div>`;
+  return h;
+}
+function repCrActivite(){
+  const {by}=computeData();
+  let h=paperHead('Compte de résultats — par activité');
+  ['1','2','3'].forEach(a=>{
+    const r=by[a].prod-by[a].cd;
+    h+=`<div class="ablock"><div class="ah"><span class="pbadge a${a}">A${a}</span> ${ACTNAME[a]}</div>
+      <div class="rrow"><span class="lbl">Produits</span><span class="val pos">+${fmt(by[a].prod)}</span></div>
+      <div class="rrow"><span class="lbl">Charges déductibles</span><span class="val neg">−${fmt(by[a].cd)}</span></div>
+      <div class="rrow sub"><span class="lbl">Résultat</span><span class="val">${fmt(r)}</span></div></div>`;
+  });
+  return h;
+}
+function repBilan(){
+  const {by}=computeData();
+  const pT=by['1'].prod+by['2'].prod+by['3'].prod;
+  const cfT=by['1'].cf+by['2'].cf+by['3'].cf;
+  const solde=pT-cfT;
+  let h=paperHead('Bilan entrées / sorties');
+  h+=`<div class="rsec"><div class="rrow"><span class="lbl">Entrées — encaissements</span><span class="val pos">+${fmt(pT)}</span></div>
+    <div class="rrow"><span class="lbl">Sorties — décaissements</span><span class="val neg">−${fmt(cfT)}</span></div>
+    <div class="rrow big"><span class="lbl">Solde de trésorerie</span><span class="val">${fmt(solde)}</span></div></div>`;
+  h+=`<div class="rsec"><div class="rsec-h">Détail par activité</div>`;
+  ['1','2','3'].forEach(a=>h+=`<div class="rrow"><span class="lbl">${ACTNAME[a]}</span><span class="val">${fmt(by[a].prod-by[a].cf)}</span></div>`);
+  h+=`</div>`;
+  h+=`<div class="paper-note"><strong>À ne pas confondre avec le résultat fiscal.</strong> Ici les sorties sont les montants réellement décaissés (montant entier des pièces). La quotité professionnelle, elle, n’intervient que dans le compte de résultats.</div>`;
+  return h;
+}
+function repFraisDetail(){
+  const {detail,by}=computeData();
+  let h=paperHead('Frais par catégorie & activité');
+  ['1','2','3'].forEach(a=>{
+    const cats=Object.keys(detail[a]).sort();
+    h+=`<div class="ablock"><div class="ah"><span class="pbadge a${a}">A${a}</span> ${ACTNAME[a]}</div>`;
+    if(!cats.length) h+=`<div class="rrow"><span class="lbl" style="color:var(--ink-faint)">Aucune charge</span><span class="val"></span></div>`;
+    cats.forEach(c=>h+=`<div class="rrow"><span class="lbl">${c}</span><span class="val neg">−${fmt(detail[a][c])}</span></div>`);
+    h+=`<div class="rrow sub"><span class="lbl">Total ${a==='1'?'activité 1':a==='2'?'activité 2':'activité 3'}</span><span class="val neg">−${fmt(by[a].cf)}</span></div></div>`;
+  });
+  h+=`<div class="paper-note">Montants entiers des pièces (frais partagés ventilés par activité). La quotité s’applique au stade du résultat.</div>`;
+  return h;
+}
+function repFraisGlobaux(){
+  const {globalCat}=computeData();
+  const cats=Object.keys(globalCat).sort();
+  let tot=0; cats.forEach(c=>tot+=globalCat[c]);
+  let h=paperHead('Frais globaux — toutes activités');
+  h+=`<div class="rsec">`;
+  cats.forEach(c=>h+=`<div class="rrow"><span class="lbl">${c}</span><span class="val neg">−${fmt(globalCat[c])}</span></div>`);
+  h+=`<div class="rrow big neg"><span class="lbl">Total des frais</span><span class="val">−${fmt(tot)}</span></div></div>`;
+  return h;
+}
+function repRepartition(){
+  const {cross}=computeData();
+  const cats=Object.keys(cross).sort();
+  const tot={'1':0,'2':0,'3':0};
+  let h=paperHead('Répartition des frais');
+  h+=`<table class="cross"><thead><tr><th>Catégorie</th><th>A1</th><th>A2</th><th>A3</th><th>Total</th></tr></thead><tbody>`;
+  cats.forEach(c=>{
+    const r=cross[c]; const t=r['1']+r['2']+r['3'];
+    tot['1']+=r['1']; tot['2']+=r['2']; tot['3']+=r['3'];
+    h+=`<tr><td>${c}</td><td>${r['1']?fmt(r['1']):'—'}</td><td>${r['2']?fmt(r['2']):'—'}</td><td>${r['3']?fmt(r['3']):'—'}</td><td class="totcol">${fmt(t)}</td></tr>`;
+  });
+  const gt=tot['1']+tot['2']+tot['3'];
+  h+=`</tbody><tfoot><tr><td>Total</td><td>${fmt(tot['1'])}</td><td>${fmt(tot['2'])}</td><td>${fmt(tot['3'])}</td><td>${fmt(gt)}</td></tr></tfoot></table>`;
+  h+=`<div class="paper-note">Chaque frais partagé est ventilé entre activités selon sa clé (ex. téléphonie 40/30/30). Les colonnes additionnées redonnent le total des frais.</div>`;
+  return h;
+}
+const ACT_FISC = {'1':'Bénéfice de profession libérale','2':'Bénéfice commercial','3':'Revenus de la location de biens'};
+
+/* ---------- Données fiscales annuelles (exemples illustratifs) ---------- */
+const FISCAL = {
+  ccss:[ {l:'Assurance pension', v:720}, {l:'Assurance maladie — soins', v:300},
+         {l:'Assurance maladie — espèces', v:60}, {l:'Assurance dépendance', v:120} ],
+  depspec:[ {l:'Assurances (RC pro, vie)', v:480}, {l:'Prévoyance-vieillesse (art. 111bis)', v:192} ],
+  avances:[ {l:'Avances trimestrielles ACD', v:1200} ],
+  credits:[ {l:'Crédit d’impôt (CIS)', v:0} ]
+};
+function sumF(arr){ return arr.reduce((s,x)=>s+x.v,0); }
+
+function repFiscal(){
+  let h=paperHead('Données fiscales de l’exercice');
+  const ccssT=sumF(FISCAL.ccss), dsT=sumF(FISCAL.depspec);
+  h+=`<div class="rsec"><div class="rsec-h">Cotisations sociales CCSS — déductibles</div>`;
+  FISCAL.ccss.forEach(x=>h+=`<div class="rrow"><span class="lbl">${x.l}</span><span class="val">${fmt(x.v)}</span></div>`);
+  h+=`<div class="rrow sub"><span class="lbl">Total cotisations</span><span class="val">${fmt(ccssT)}</span></div></div>`;
+  h+=`<div class="rsec"><div class="rsec-h">Dépenses spéciales — déductibles</div>`;
+  FISCAL.depspec.forEach(x=>h+=`<div class="rrow"><span class="lbl">${x.l}</span><span class="val">${fmt(x.v)}</span></div>`);
+  h+=`<div class="rrow sub"><span class="lbl">Total dépenses spéciales</span><span class="val">${fmt(dsT)}</span></div></div>`;
+  h+=`<div class="rsec"><div class="rsec-h">Pour information — non déductibles</div>`;
+  FISCAL.avances.forEach(x=>h+=`<div class="rrow"><span class="lbl">${x.l}</span><span class="val">${fmt(x.v)}</span></div>`);
+  FISCAL.credits.forEach(x=>h+=`<div class="rrow"><span class="lbl">${x.l}</span><span class="val">${x.v?fmt(x.v):'néant'}</span></div>`);
+  h+=`</div>`;
+  h+=`<div class="paper-note"><strong>Chiffres illustratifs.</strong> Ces montants se téléchargent : extrait de compte annuel du <strong>CCSS</strong> pour les cotisations, certificats d’assurance et de prévoyance pour les dépenses spéciales, relevé des avances auprès de l’<strong>ACD</strong>. Les taux et plafonds évoluent chaque année.</div>`;
+  return h;
+}
+function repDeclaration(){
+  const {by}=computeData();
+  const groups={};
+  ['1','2','3'].forEach(a=>{ const cat=ACT_FISC[a]; (groups[cat]=groups[cat]||[]).push({a, benef:by[a].prod-by[a].cd}); });
+  let total=0;
+  let h=paperHead('Déclaration fiscale — récapitulatif (modèle 100)');
+  Object.keys(groups).forEach(cat=>{
+    let sub=0;
+    h+=`<div class="rsec"><div class="rsec-h">${cat}</div>`;
+    groups[cat].forEach(x=>{ sub+=x.benef; total+=x.benef;
+      h+=`<div class="rrow"><span class="lbl">${ACTNAME[x.a]}</span><span class="val">${fmt(x.benef)}</span></div>`; });
+    h+=`<div class="rrow sub"><span class="lbl">Sous-total</span><span class="val">${fmt(sub)}</span></div></div>`;
+  });
+  const ccssT=sumF(FISCAL.ccss), dsT=sumF(FISCAL.depspec);
+  const imposable=total-ccssT-dsT;
+  h+=`<div class="rsec"><div class="rsec-h">Du bénéfice au revenu imposable</div>
+    <div class="rrow"><span class="lbl">Revenu net des activités</span><span class="val">${fmt(total)}</span></div>
+    <div class="rrow"><span class="lbl">− Cotisations sociales (CCSS)</span><span class="val neg">−${fmt(ccssT)}</span></div>
+    <div class="rrow"><span class="lbl">− Dépenses spéciales</span><span class="val neg">−${fmt(dsT)}</span></div>
+    <div class="rrow big"><span class="lbl">Revenu imposable (avant barème)</span><span class="val">${fmt(imposable)}</span></div></div>`;
+  h+=`<div class="paper-note"><strong>Récapitulatif de préparation — pas la déclaration déposée.</strong> Ces montants alimentent le formulaire <strong>modèle 100</strong> (100 F) déposé à l’ACD via MyGuichet.lu, avant le 31 décembre de l’année suivante. Le calcul de l’impôt dû (barème, classe d’impôt 1/1a/2) n’est pas réalisé ici. Avances ACD déjà versées : ${fmt(sumF(FISCAL.avances))} (à régulariser au décompte).</div>`;
+  return h;
+}
+const REPORTS = {crGlobal:repCrGlobal,crActivite:repCrActivite,bilan:repBilan,fraisDetail:repFraisDetail,fraisGlobaux:repFraisGlobaux,repartition:repRepartition,fiscal:repFiscal,declaration:repDeclaration};
+function showExp(id){
+  document.querySelectorAll('#v-export .subview').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('viewport').scrollTop=0;
+}
+function openReport(type){
+  document.getElementById('paperBody').innerHTML = REPORTS[type]();
+  showExp('export-doc');
+}
+
+/* ---------- Fiche : données fiscales annuelles ---------- */
+function openFiscal(){
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('fiscalSheet').classList.add('show');
+}
+
+/* ---------- Paramètres ---------- */
+function clotureExercice(){
+  confirmAction('Clôturer l’exercice ?',
+    'L’exercice <strong>2026</strong> passera en <strong>lecture seule</strong>. Un déverrouillage protégé sera nécessaire pour le rouvrir et le modifier.',
+    'Clôturer',
+    ()=>{ document.getElementById('yearState').textContent='Clôturé';
+          document.getElementById('yearState').className='state-badge locked';
+          setTimeout(()=>toast('Exercice clôturé'),180); });
+}
+function razPieces(){
+  confirmAction('Remettre les pièces à zéro ?',
+    'Toutes les <strong>pièces</strong> de l’exercice 2026 seront supprimées. Les <strong>activités</strong> et <strong>catégories</strong> sont conservées. Action définitive.',
+    'Tout effacer',
+    ()=>setTimeout(()=>toast('Pièces de l’exercice supprimées'),180));
+}
+
+function eur(n){
+  const s = n<0 ? '−' : '+';
+  return s + Math.abs(n).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function badgeFor(d){
+  if(d.act==='share'){
+    const r = Object.values(d.split).join('/');
+    return '<span class="pbadge sh">Partagé · '+r+'</span>';
+  }
+  return '<span class="pbadge a'+d.act+'">A'+d.act+'</span>';
+}
+function renderDocs(){
+  const q = (document.getElementById('docQuery').value||'').toLowerCase().trim();
+  let listed = DOCS.filter(d=>{
+    const matchF = (docFilter==='all') || (d.act===docFilter) ||
+                   (docFilter!=='share' && d.act==='share'); // partagé visible dans chaque activité
+    const matchShareTab = (docFilter==='share') ? d.act==='share' : true;
+    const matchQ = !q || (d.lib.toLowerCase().includes(q) || d.cat.toLowerCase().includes(q));
+    return matchF && matchShareTab && matchQ;
+  });
+
+  // totaux des pièces listées (montant document)
+  let prod=0, charge=0;
+  listed.forEach(d=>{ if(d.m>=0) prod+=d.m; else charge+=d.m; });
+  document.getElementById('totProd').textContent = eur(prod);
+  document.getElementById('totCharge').textContent = eur(charge);
+
+  // caption : prévenir que les partagés sont répartis ailleurs
+  const cap = document.getElementById('docCaption');
+  const hasShared = listed.some(d=>d.act==='share');
+  if(docFilter!=='all' && docFilter!=='share' && hasShared){
+    cap.style.display='block';
+    cap.textContent = 'Les pièces partagées sont affichées en entier ici ; leur répartition par activité est calculée dans Export.';
+  } else cap.style.display='none';
+
+  // liste
+  const wrap = document.getElementById('docsList');
+  if(!listed.length){ wrap.innerHTML = '<div class="doc-empty">Aucune pièce ne correspond.</div>'; return; }
+  wrap.innerHTML = listed.map(d=>{
+    const gi = DOCS.indexOf(d);
+    return `<div class="bline doc" onclick="openDocRow(${gi})">
+      <div class="bi"><div class="lab">${d.lib}</div>
+        <div class="dt">${d.date} · ${d.cat} ${badgeFor(d)}</div></div>
+      <div class="amt ${d.m>=0?'pos':'neg'}">${eur(d.m)}</div>
+    </div>`;
+  }).join('');
+}
+function setDocFilter(f){
+  docFilter = f;
+  document.querySelectorAll('#docFilters .fchip').forEach(c=>c.classList.toggle('on', c.dataset.f===f));
+  renderDocs();
+  // synchro bandeau pour les filtres d'activité (pas pour "Partagés")
+  if(f==='all'||f==='1'||f==='2'||f==='3'){
+    SEL.act.cur = f;
+    document.getElementById('ctxActVal').firstChild.textContent = (f==='all'?'Toutes':'Activité '+f)+' ';
+  }
+}
+function openDocRow(i){
+  const d = DOCS[i];
+  const scope = d.act==='share' ? 'share' : 'act';
+  openPiece(d.lib, d.date, eur(d.m)+' €', d.kind, scope, d.reg, d.cat);
+}
+
+function renderCats(){
+  const d = CATDATA[currentCatAct];
+  document.getElementById('catProduits').innerHTML = d.produit.map((p,i)=>`
+    <div class="cat-row" onclick="openCatEdit('produit',${i})">
+      <span class="cn">${p}</span>
+      <button class="trash" onclick="event.stopPropagation();quickDelete('produit',${i})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
+      <span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></span>
+    </div>`).join('');
+  document.getElementById('catCharges').innerHTML = d.charge.map((c,i)=>`
+    <div class="cat-row" onclick="openCatEdit('charge',${i})">
+      <span class="cn">${c.n}</span>
+      <span class="quot-pill">${c.q} %</span>
+      <button class="trash" onclick="event.stopPropagation();quickDelete('charge',${i})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
+      <span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></span>
+    </div>`).join('');
+}
+function setCatActivity(a){
+  currentCatAct = a;
+  document.querySelectorAll('#catSeg button').forEach(b=>b.classList.toggle('on', b.dataset.a===a));
+  renderCats();
+  // synchro avec le bandeau (source unique : l'activité courante)
+  SEL.act.cur = a;
+  document.getElementById('ctxActVal').firstChild.textContent = 'Activité '+a+' ';
+}
+function openCatEdit(section, index){
+  if(event) event.stopPropagation();
+  catEditRef = {section, index};
+  const isNew = index<0;
+  const isCharge = section==='charge';
+  document.getElementById('catSheetTitle').textContent =
+    isNew ? (isCharge?'Nouvelle charge':'Nouveau produit') : 'Modifier la catégorie';
+  document.getElementById('catSectionLbl').textContent =
+    (isCharge?'Charge (dépense)':'Produit (recette)') + ' · ' + ACT_LABEL[currentCatAct];
+  document.getElementById('catQuotField').style.display = isCharge ? 'block':'none';
+  if(isNew){
+    document.getElementById('catNom').value = '';
+    document.getElementById('catQuot').value = '100 %';
+  } else {
+    const item = CATDATA[currentCatAct][section][index];
+    document.getElementById('catNom').value = isCharge ? item.n : item;
+    if(isCharge) document.getElementById('catQuot').value = item.q + ' %';
+  }
+  document.getElementById('catDelete').style.display = isNew ? 'none':'inline-block';
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('catSheet').classList.add('show');
+}
+function saveCat(){
+  const {section, index} = catEditRef;
+  const nom = document.getElementById('catNom').value.trim() || 'Sans nom';
+  const list = CATDATA[currentCatAct][section];
+  if(section==='charge'){
+    const q = parseInt((document.getElementById('catQuot').value||'100').replace(/\D/g,''))||0;
+    if(index<0) list.push({n:nom,q}); else list[index]={n:nom,q};
+  } else {
+    if(index<0) list.push(nom); else list[index]=nom;
+  }
+  closeAll(); renderCats();
+  setTimeout(()=>toast(index<0?'Catégorie ajoutée':'Catégorie enregistrée'),180);
+}
+function deleteCat(){
+  const {section, index} = catEditRef;
+  const item = CATDATA[currentCatAct][section][index];
+  const name = section==='charge' ? item.n : item;
+  closeAll();
+  setTimeout(()=>askConfirm(name, ()=>{
+    CATDATA[currentCatAct][section].splice(index,1);
+    renderCats();
+    setTimeout(()=>toast('Catégorie supprimée'),180);
+  }),200);
+}
+function quickDelete(section, index){
+  const item = CATDATA[currentCatAct][section][index];
+  const name = section==='charge' ? item.n : item;
+  askConfirm(name, ()=>{
+    CATDATA[currentCatAct][section].splice(index,1);
+    renderCats();
+    setTimeout(()=>toast('Catégorie supprimée'),180);
+  });
+}
+
+/* ---------- Navigation onglets ---------- */
+function tab(v, el){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.getElementById('v-'+v).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('viewport').scrollTop = 0;
+  if(v==='scan') backToScanHome();
+  if(v==='categorie'){
+    // suit l'activité du bandeau si une est choisie, sinon Activité 1
+    const a = (SEL.act.cur && SEL.act.cur!=='all') ? SEL.act.cur : '1';
+    setCatActivity(a);
+  }
+  if(v==='documents'){
+    const f = (SEL.act.cur==='1'||SEL.act.cur==='2'||SEL.act.cur==='3') ? SEL.act.cur : 'all';
+    setDocFilter(f);
+  }
+  if(v==='export') showExp('export-home');
+}
+
+/* ---------- Scan : niveaux ---------- */
+function showSub(id){
+  document.querySelectorAll('#v-scan .subview').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('viewport').scrollTop = 0;
+}
+function backToScanHome(){ showSub('scan-home'); }
+
+function openScanMenu(badge, name, regime){
+  currentRegime = (regime==='tva') ? 'tva' : 'fr';
+  currentScope  = (regime==='share') ? 'share' : 'act';
+  const b = document.getElementById('menuBadge');
+  b.textContent = badge;
+  b.classList.toggle('shared', currentScope==='share');
+  let reg = currentScope==='share' ? 'Réparti entre activités'
+           : (currentRegime==='tva' ? 'TVA normale' : 'Franchise — sans TVA');
+  document.getElementById('menuName').innerHTML = name + '<small>'+reg+'</small>';
+  showSub('scan-menu');
+}
+function go(target){ if(target==='bank') showSub('scan-bank'); }
+
+/* ---------- Configurer les blocs conditionnels de la fiche ---------- */
+function configFiche(kind){
+  const sel = document.getElementById('sheetCat');
+  sel.innerHTML = (CATS[kind]||[]).map(c=>'<option>'+c+'</option>').join('');
+  document.getElementById('quotiteField').style.display = (kind==='charge') ? 'block':'none';
+  document.getElementById('tvaBlock').style.display =
+    (currentRegime==='tva' && kind!=='aucun' && currentScope!=='share') ? 'block':'none';
+  const share = (currentScope==='share' && kind!=='aucun');
+  document.getElementById('shareBlock').style.display = share ? 'block':'none';
+  if(share) sumRepart();
+}
+
+/* ---------- Ouvrir la fiche depuis une pièce déjà encodée ---------- */
+function openPiece(lib, date, montant, kind, scope, regime, cat){
+  if(window.event) window.event.stopPropagation();
+  currentRegime = regime;
+  currentScope  = scope;
+  document.getElementById('sheetTitle').textContent = 'Modifier la pièce';
+  document.getElementById('fLib').value  = lib;
+  document.getElementById('fDate').value = date;
+  document.getElementById('fMont').value = montant;
+  configFiche(kind);
+  const sel = document.getElementById('sheetCat');
+  for(const o of sel.options){ if(o.text===cat){ o.selected=true; break; } }
+  document.getElementById('deletePiece').style.display = 'inline-block';
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('sheet').classList.add('show');
+}
+
+/* ---------- Bottom sheet (fiche) depuis le Scan ---------- */
+function openSheet(title, kind){
+  document.getElementById('sheetTitle').textContent = title;
+  document.getElementById('fLib').value  = 'Saisie automatique…';
+  document.getElementById('fDate').value = '14/12/2025';
+  document.getElementById('fMont').value = '0,00 €';
+  configFiche(kind);
+  document.getElementById('deletePiece').style.display = 'none';
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('sheet').classList.add('show');
+}
+function closeSheet(){ closeAll(); }
+function closeAll(){
+  document.getElementById('scrim').classList.remove('show');
+  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('show'));
+  document.getElementById('confirmBox').classList.remove('show');
+}
+
+/* ---------- Confirmation réutilisable ---------- */
+let confirmCb = null;
+function askConfirm(name, onYes){
+  document.getElementById('confirmTitle').textContent = 'Supprimer ?';
+  document.getElementById('confirmMsg').innerHTML =
+    'Cette action est définitive.<br>Supprimer <strong>'+name+'</strong> ?';
+  document.getElementById('confirmBtn').textContent = 'Supprimer';
+  confirmCb = onYes;
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('confirmBox').classList.add('show');
+}
+function confirmAction(title, msgHtml, btnLabel, onYes){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').innerHTML = msgHtml;
+  document.getElementById('confirmBtn').textContent = btnLabel;
+  confirmCb = onYes;
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('confirmBox').classList.add('show');
+}
+function hideConfirm(){
+  document.getElementById('confirmBox').classList.remove('show');
+  document.getElementById('scrim').classList.remove('show');
+  confirmCb = null;
+}
+function doConfirm(){
+  const cb = confirmCb;
+  hideConfirm();
+  if(cb) cb();
+}
+
+/* ---------- Sélecteur année / activité ---------- */
+const SEL = {
+  year:{ title:'Choisir l’exercice', cur:'2026',
+    opts:[
+      {v:'2026',l:'Exercice 2026',s:'Revenus 2025'},
+      {v:'2025',l:'Exercice 2025',s:'Revenus 2024'}
+    ], add:'+ Ajouter une année' },
+  act:{ title:'Filtrer par activité', cur:'all',
+    opts:[
+      {v:'all',l:'Toutes les activités',s:'Vue d’ensemble'},
+      {v:'1',l:'Activité 1',s:'Conseil & formation'},
+      {v:'2',l:'Activité 2',s:'Vente d’articles'},
+      {v:'3',l:'Activité 3',s:'Location meublée'}
+    ] }
+};
+function openSelector(type){
+  const cfg = SEL[type];
+  document.getElementById('selTitle').textContent = cfg.title;
+  let html = cfg.opts.map(o=>`
+    <button class="opt ${o.v===cfg.cur?'on':''}" onclick="pickOption('${type}','${o.v}','${o.l}','${o.s||''}')">
+      <span><span class="ol">${o.l}</span><span class="os">${o.s||''}</span></span>
+      <span class="ck"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span>
+    </button>`).join('');
+  if(cfg.add) html += `<button class="opt add" onclick="closeAll();setTimeout(()=>toast('Ajouter une année — duplique la structure, vide de pièces'),180)">${cfg.add}</button>`;
+  document.getElementById('selBody').innerHTML = html;
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('selSheet').classList.add('show');
+}
+function pickOption(type, v, l, s){
+  SEL[type].cur = v;
+  if(type==='year'){
+    document.getElementById('ctxYearVal').firstChild.textContent =
+      (v==='2026'?'2026 · Rev. 2025':'2025 · Rev. 2024')+' ';
+    // met à jour le grand en-tête Exercice
+    const ex = document.querySelector('#v-dossier .exercice h1');
+    const rv = document.querySelector('#v-dossier .exercice .revenus');
+    if(v==='2026'){ ex.textContent='Exercice d’imposition 2026'; rv.textContent='Revenus de l’année 2025'; }
+    else { ex.textContent='Exercice d’imposition 2025'; rv.textContent='Revenus de l’année 2024'; }
+    document.querySelectorAll('#v-dossier .year-pill').forEach(p=>p.classList.remove('on'));
+  }
+  if(type==='act'){
+    document.getElementById('ctxActVal').firstChild.textContent = (v==='all'?'Toutes':'Activité '+v)+' ';
+    filterByActivity(v);
+  }
+  closeAll();
+}
+
+/* ---------- Filtre d'activité (effet visible du bandeau) ---------- */
+function filterByActivity(v){
+  // 1) lignes de pièces : une pièce partagée concerne chaque activité → reste visible
+  let n=0;
+  document.querySelectorAll('#piecesList .bline').forEach(line=>{
+    const a = line.getAttribute('data-act');
+    const show = (v==='all') || (a===v) || (a==='share');
+    line.classList.toggle('hide', !show);
+    if(show) n++;
+  });
+  document.getElementById('piecesCount').textContent =
+    n + ' pièce' + (n>1?'s':'') + ' · ' + (v==='all'?'toutes activités':'Activité '+v+' (+ partagées)');
+  // 2) cartes d'activité : on met en avant celle qui est filtrée
+  const cards = document.querySelectorAll('#v-dossier .act-card');
+  cards.forEach((c,i)=>{
+    const isSel = (v!=='all' && String(i+1)===v);
+    c.classList.toggle('sel', isSel);
+    c.classList.toggle('dim', v!=='all' && !isSel);
+  });
+}
+
+/* ---------- Fiche d'édition d'une activité ---------- */
+function openActivity(badge, lib, nat, reg){
+  document.getElementById('actSheetTitle').textContent = badge;
+  document.getElementById('actLib').value = lib;
+  document.getElementById('actNat').value = nat;
+  document.getElementById('actReg').value = reg;
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('actSheet').classList.add('show');
+}
+function saveSheet(){
+  closeSheet();
+  setTimeout(()=>toast('Pièce enregistrée'),180);
+}
+
+/* ---------- Répartition : somme = 100 ---------- */
+function sumRepart(){
+  let t=0;
+  document.querySelectorAll('#shareBlock .rp').forEach(i=>{
+    const v=parseFloat((i.value||'0').replace(',','.'))||0; t+=v;
+  });
+  const el=document.getElementById('repartSum');
+  el.textContent = (Math.round(t*100)/100)+' %';
+  el.className = (Math.abs(t-100)<.01) ? 'ok mono' : 'bad mono';
+}
+
+/* ---------- Switch activité active ---------- */
+function togSwitch(wrap){
+  const s = wrap.querySelector('.switch');
+  s.classList.toggle('off');
+  const card = wrap.closest('.act-card');
+  card.classList.toggle('muted', s.classList.contains('off'));
+}
+
+/* ---------- Toast ---------- */
+let toastT;
+function toast(msg){
+  document.getElementById('toastMsg').textContent = msg;
+  const t=document.getElementById('toast');
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>t.classList.remove('show'),2200);
+}
+</script>
+</body>
+</html>
